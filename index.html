@@ -1,247 +1,423 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>The Penthouse Poet — Neon Dreams (Prototype)</title>
-  <meta name="description" content="The Penthouse Poet: Neon Dreams — single-file playable HTML prototype. Dark neon pixel aesthetic, keyboard + touch controls." />
-  <style>
-    :root{--bg:#03030a;--card:#070616;--neon1:#00c8ff;--neon2:#ff16a6;--soft:#cfeaff}
-    html,body{height:100%;margin:0;background:var(--bg);color:var(--soft);font-family:Inter,ui-sans-serif,system-ui,'Courier New',monospace}
-    .wrap{display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px}
-    h1{margin:6px 0 0;font-size:26px}
-    h1 .neon{color:#fff;text-shadow:0 0 8px rgba(255,0,180,0.6),0 0 28px rgba(0,200,255,0.08)}
-    p.lead{margin:0;color:#b9c9dd;max-width:980px;text-align:center}
-
-    #gameWrap{position:relative;width:960px;max-width:96vw;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#050512 0%,#06021a 60%);box-shadow:0 30px 90px rgba(0,0,0,0.8);border:1px solid rgba(255,255,255,0.03)}
-    canvas{width:100%;height:auto;display:block;image-rendering:pixelated;background:transparent}
-
-    .hud{position:absolute;left:12px;top:12px;color:var(--soft);font-family:monospace;font-size:13px}
-    .dialogue{position:absolute;left:50%;transform:translateX(-50%);bottom:16px;background:linear-gradient(180deg,rgba(0,0,0,0.48),rgba(0,0,0,0.24));backdrop-filter:blur(4px);padding:12px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);max-width:86%;font-family:Georgia,serif;color:#f3f7fb}
-
-    .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;padding:10px}
-    .btn{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.03);padding:7px 12px;border-radius:8px;color:var(--soft);font-family:monospace}
-
-    /* Touch UI */
-    .touch-ui{position:absolute;right:10px;bottom:10px;display:flex;gap:8px;flex-direction:column}
-    .touch-row{display:flex;gap:8px}
-    .touch-btn{width:58px;height:58px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.03);backdrop-filter:blur(3px)}
-    .touch-btn svg{width:26px;height:26px;opacity:0.95}
-
-    footer{color:#93a3b6;font-size:13px;margin:12px 0 30px;text-align:center}
-
-    @media (max-width:640px){#gameWrap{width:100vw;border-radius:0} .dialogue{font-size:13px}}
-  </style>
+<meta charset="utf-8" />
+<title>The Penthouse Poet — Neon Dreams (Jazz-Noir Gritty Preview)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<style>
+  :root{--bg:#07070b;--accent:#c9b07a;--cool:#5fe0ff}
+  html,body{height:100%;margin:0;background:var(--bg);color:#eaeef2;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;overflow:hidden}
+  #wrap{position:relative;width:100vw;left:50%;margin-left:-50vw;height:100vh;overflow:hidden;touch-action:none}
+  canvas{display:block;width:100%;height:100%}
+  #overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:60;background:linear-gradient(180deg,rgba(0,0,0,0.85),rgba(0,0,0,0.98));text-align:center;padding:22px}
+  #title{font-size:clamp(20px,5vw,42px);font-weight:800;color:var(--accent);margin-bottom:6px;text-shadow:0 6px 30px rgba(0,0,0,0.6)}
+  .btn{padding:12px 22px;border-radius:999px;border:none;background:linear-gradient(90deg,var(--cool),var(--accent));color:#02121a;font-weight:700;cursor:pointer;font-size:16px}
+  .hint{color:#cfe8ff;margin-top:12px;font-size:13px;opacity:0.95}
+  #hud{position:fixed;left:12px;bottom:12px;z-index:70;padding:8px 12px;border-radius:10px;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.03);font-size:13px}
+  #quote{position:fixed;left:50%;bottom:6%;transform:translateX(-50%);z-index:75;padding:12px 16px;border-radius:10px;background:linear-gradient(180deg,rgba(0,0,0,0.94),rgba(0,0,0,0.78));display:none;color:#fff;max-width:86%;font-family:Georgia,serif}
+  #joystick{position:fixed;left:12px;bottom:96px;width:110px;height:110px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);display:none;z-index:70;background:rgba(255,255,255,0.02)}
+  #knob{position:absolute;left:32px;top:32px;width:46px;height:46px;border-radius:999px;background:var(--cool)}
+  #interact{position:fixed;right:12px;bottom:96px;z-index:70;display:none}
+  .btnBig{padding:12px 14px;border-radius:999px;background:linear-gradient(90deg,var(--cool),var(--accent));border:none;color:#02121a;font-weight:700;cursor:pointer}
+  .grain{pointer-events:none;position:fixed;inset:0;opacity:0.06;z-index:9999;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22256%22 height=%22256%22><filter id=%22n%22><feTurbulence baseFrequency=%220.9%22 numOctaves=%221%22 stitchTiles=%22stitch%22/><feColorMatrix type=%22saturate%22 values=%220%22/></filter><rect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22 opacity=%22.6%22 /></svg>');mix-blend-mode:overlay}
+  @media (hover:none) and (pointer:coarse){ #joystick{display:block} #interact{display:block} }
+  iframe, canvas, button { pointer-events:auto !important; }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <h1><span class="neon">The Penthouse Poet</span> <span style="opacity:.6">—</span> <span class="tag">Neon Dreams</span></h1>
-    <p class="lead">A compact, single-file prototype: dark, drugged-out neon, pixel visuals, keyboard + touch controls. Move, jump, trance (slow-time), collect verses. Drop this as <code>index.html</code> into a GitHub Pages repo or open it locally.</p>
+<div id="wrap">
+  <canvas id="canvas" aria-label="Neon Jazz Gritty canvas"></canvas>
 
-    <div id="gameWrap">
-      <canvas id="game" width="640" height="360" tabindex="0"></canvas>
-      <div class="hud" id="hud">HP: <span id="hp">3</span> &nbsp; | &nbsp; VERSE: <span id="flow">0</span> &nbsp; | &nbsp; TRANCE: <span id="trance">READY</span></div>
-      <div class="dialogue" id="dialogue" style="display:none"></div>
-
-      <!-- Touch controls -->
-      <div class="touch-ui" id="touchUI" aria-hidden="false">
-        <div class="touch-row">
-          <div class="touch-btn" id="btn-left" title="Left"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="touch-btn" id="btn-right" title="Right"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        </div>
-        <div class="touch-row">
-          <div class="touch-btn" id="btn-jump" title="Jump"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6"><path d="M12 5l7 12H5z" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="touch-btn" id="btn-trance" title="Trance"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6"><circle cx="12" cy="12" r="8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="controls">
-      <button class="btn" id="startBtn">Start / Restart</button>
-      <button class="btn" id="muteBtn">Mute Music</button>
-      <button class="btn" id="downloadBtn">Download index.html</button>
-    </div>
-
-    <footer>Tip: If you use a React/Vite project, place this file in <code>public/</code> or host in a plain repo root to avoid build errors.</footer>
+  <div id="overlay" role="dialog" aria-modal="true">
+    <div id="title">THE PENTHOUSE POET</div>
+    <div style="color:#cfe8ff;margin-bottom:14px">Neon Dreams — Jazz-Noir (Gritty Preview)</div>
+    <button id="startBtn" class="btn">ENTER NEON NIGHT</button>
+    <div class="hint">Tap to start • 8s cinematic → gameplay • Joystick on mobile</div>
   </div>
 
-  <script>
-  // The Penthouse Poet — Single-file playable prototype with touch + keyboard controls.
-  // Controls: A/D or ←/→ move, W/Space/↑ jump, S or Shift trance (slow time), J attack (not required for core), K interact/next
+  <div id="hud">Mode: Idle · Fragments: 0</div>
+  <div id="quote"></div>
+  <div id="joystick"><div id="knob"></div></div>
+  <div id="interact"><button id="interactBtn" class="btnBig">Interact</button></div>
+  <div class="grain"></div>
+</div>
 
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
+<!-- Audio layers: jazz loop (Pixabay), rain ambience, soft footstep -->
+<audio id="jazz" loop preload="auto">
+  <source src="https://cdn.pixabay.com/download/audio/2021/08/09/audio_6e8a3a0e1c.mp3?filename=sad-jazz-loop-11095.mp3" type="audio/mpeg">
+</audio>
+<audio id="rain" loop preload="auto">
+  <source src="https://cdn.pixabay.com/download/audio/2021/10/05/audio_45b3b8b1f6.mp3?filename=light-rain-ambient-111351.mp3" type="audio/mpeg">
+</audio>
+<audio id="foot" preload="auto">
+  <source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_2e6a2a3f92.mp3?filename=footstep-soft-7333.mp3" type="audio/mpeg">
+</audio>
 
-  // Friendly high-dpi scaling for crisp pixels
-  function scaleCanvasForHiDPI(){
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; ctx.setTransform(dpr,0,0,dpr,0,0);
-  }
-  scaleCanvasForHiDPI(); window.addEventListener('resize', ()=>{ fitCanvas(); scaleCanvasForHiDPI(); });
+<!-- three.js and postprocessing UMD -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.161.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.161.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.161.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.161.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.161.0/examples/js/shaders/FXAAShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.161.0/examples/js/controls/PointerLockControls.js"></script>
 
-  // Fit canvas to container width
-  function fitCanvas(){ const wrap = document.getElementById('gameWrap'); const ratio = Math.min(wrap.clientWidth / W, 1); canvas.style.width = Math.round(W * ratio) + 'px'; }
-  fitCanvas();
+<script>
+// Neon Jazz Gritty — base world with cinematic cutscene
+(() => {
+  const startBtn = document.getElementById('startBtn');
+  const overlay = document.getElementById('overlay');
+  const canvas = document.getElementById('canvas');
+  const hud = document.getElementById('hud');
+  const quote = document.getElementById('quote');
+  const jazz = document.getElementById('jazz');
+  const rain = document.getElementById('rain');
+  const foot = document.getElementById('foot');
+  const joystick = document.getElementById('joystick');
+  const knob = document.getElementById('knob');
+  const interactBtn = document.getElementById('interactBtn');
 
-  // Input
-  const keys = {};
-  addEventListener('keydown', e=>{ keys[e.key.toLowerCase()] = true; if([' ','arrowup','w'].includes(e.key.toLowerCase())) e.preventDefault(); });
-  addEventListener('keyup', e=>{ keys[e.key.toLowerCase()] = false; });
+  let renderer, scene, camera, composer, clock, raycaster;
+  let controls, listener;
+  let player = new THREE.Object3D();
+  let move = {f:0,b:0,l:0,r:0};
+  let npcs = [];
+  let audioCtx = null, audioStarted = false;
+  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  // Touch buttons
-  const touchMap = { left:false, right:false, jump:false, trance:false };
-  function bindTouch(id, keyName){ const el = document.getElementById(id); if(!el) return; let active=false; el.addEventListener('touchstart', e=>{ e.preventDefault(); active=true; touchMap[keyName]=true; el.classList.add('active'); }); el.addEventListener('touchend', e=>{ active=false; touchMap[keyName]=false; el.classList.remove('active'); }); el.addEventListener('touchcancel', ()=>{ active=false; touchMap[keyName]=false; el.classList.remove('active'); }); el.addEventListener('mousedown', e=>{ e.preventDefault(); touchMap[keyName]=true; el.classList.add('active'); }); document.addEventListener('mouseup', ()=>{ touchMap[keyName]=false; el.classList.remove('active'); }); }
-  bindTouch('btn-left','left'); bindTouch('btn-right','right'); bindTouch('btn-jump','jump'); bindTouch('btn-trance','trance');
-
-  // Game state
-  let state = 'menu';
-  const player = {x:64,y:220,w:10,h:18,vx:0,vy:0,onGround:false,hp:3,flow:0,tranceCD:0,inv:0};
-  const gravity = 3200, accel = 1100, maxVX = 160, jumpPower = 2600;
-
-  // Level definition (simple, short)
-  const levels = [
-    {name:'Alley of Echoes', bgHue:220, platforms:[{x:0,y:320,w:640,h:40},{x:120,y:240,w:120,h:10},{x:300,y:200,w:140,h:10},{x:480,y:150,w:120,h:10}], enemies:[{x:360,y:180,type:'drone'}], pickups:[{x:170,y:210,type:'verse'}], dialogue:["They gave me a penthouse and a needle. Memory tastes like neon."]},
-    {name:'Club Lila', bgHue:300, platforms:[{x:0,y:320,w:640,h:40},{x:40,y:240,w:80,h:10},{x:180,y:200,w:90,h:10},{x:320,y:160,w:110,h:10}], enemies:[{x:250,y:180,type:'shade'}], pickups:[{x:200,y:180,type:'verse'}], dialogue:["Lila moves through smoke like a half-remembered stanza."]}
+  // Simple poetic lines (for later NPCs)
+  const LINES = [
+    "You pay with moments and the city stores them like coins.",
+    "Neon writes your name on the wet pavement.",
+    "Tonight the skyline eats the stars.",
+    "We barter with secrets in subway cars."
   ];
-  let levelIndex = 0; let current = null;
 
-  // Visual elements
-  const neon = []; for(let i=0;i<18;i++) neon.push({x:Math.random()*W,y:Math.random()*H*0.6,size:20+Math.random()*80,phase:Math.random()*Math.PI*2,hue:Math.random()*360});
-  const particles = [];
+  // presets
+  const PRESETS = {
+    Ultra:{dpr:1.5, windows:2000, traffic:28},
+    High:{dpr:1.15, windows:1100, traffic:20},
+    Medium:{dpr:1.0, windows:700, traffic:12},
+    Low:{dpr:0.7, windows:300, traffic:6}
+  };
+  function choosePreset(){ return isMobile ? PRESETS.Medium : PRESETS.High; }
 
-  // HUD elements
-  const hpEl = document.getElementById('hp'); const flowEl = document.getElementById('flow'); const tranceEl = document.getElementById('trance'); const dialogueEl = document.getElementById('dialogue');
+  // Click/touch start — must do synchronous user gesture to allow audio on iOS
+  async function onStart(e){
+    e && e.preventDefault && e.preventDefault();
+    overlay.style.display = 'none';
+    // init audio context and play layers
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioStarted = true;
+      // connect HTML audio elements to audioCtx for future mixing if desired
+      const jazzSrc = audioCtx.createMediaElementSource(jazz);
+      const rainSrc = audioCtx.createMediaElementSource(rain);
+      const jazzGain = audioCtx.createGain(); jazzGain.gain.value = 0.9;
+      const rainGain = audioCtx.createGain(); rainGain.gain.value = 0.45;
+      jazzSrc.connect(jazzGain); rainSrc.connect(rainGain);
+      jazzGain.connect(audioCtx.destination); rainGain.connect(audioCtx.destination);
+      // start playing
+      await jazz.play().catch(()=>{});
+      await rain.play().catch(()=>{});
+    } catch(err){
+      console.warn('AudioContext failed or blocked:', err);
+      // fallback: try to play audio elements directly
+      try { jazz.play().catch(()=>{}); rain.play().catch(()=>{}); } catch(e){}
+    }
 
-  // Audio (light ambience)
-  let audioCtx=null, masterGain=null, musicOn=true;
-  function initAudio(){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); masterGain = audioCtx.createGain(); masterGain.gain.value = 0.06; masterGain.connect(audioCtx.destination);
-      // slow oscillator pad
-      const osc = audioCtx.createOscillator(); osc.type='sine'; osc.frequency.value=110; const gain = audioCtx.createGain(); gain.gain.value = 0.002; osc.connect(gain); gain.connect(masterGain); osc.start();
-      // ambient noise
-      const bufferSize = 1*audioCtx.sampleRate; const noiseBuff = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate); const ch = noiseBuff.getChannelData(0); for(let i=0;i<bufferSize;i++) ch[i] = (Math.random()*2-1)*0.02;
-      const nb = audioCtx.createBufferSource(); nb.buffer = noiseBuff; nb.loop = true; const ng = audioCtx.createGain(); ng.gain.value = 0.35; nb.connect(ng); ng.connect(masterGain); nb.start();
-    }catch(e){ console.warn('Audio unavailable', e); }
+    // initialize 3D if not already
+    if(!renderer) await init();
+    // start cinematic then enter gameplay
+    startCutscene();
   }
 
-  document.getElementById('muteBtn').addEventListener('click', ()=>{ musicOn = !musicOn; if(masterGain) masterGain.gain.value = musicOn?0.06:0; document.getElementById('muteBtn').textContent = musicOn? 'Mute Music' : 'Unmute'; });
+  startBtn.addEventListener('click', onStart, {passive:false});
+  startBtn.addEventListener('touchstart', onStart, {passive:false});
 
-  document.getElementById('startBtn').addEventListener('click', ()=>{ startGame(); });
-  document.getElementById('downloadBtn').addEventListener('click', ()=>{ const blob = new Blob([document.documentElement.outerHTML], {type: 'text/html'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'index.html'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),10000); });
+  // init three scene
+  async function init(){
+    const preset = choosePreset();
 
-  function startGame(){ if(!audioCtx) initAudio(); if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); state='playing'; levelIndex=0; player.hp=3; player.flow=0; loadLevel(levelIndex); }
+    renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, preset.dpr));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
-  function loadLevel(i){ current = JSON.parse(JSON.stringify(levels[i])); player.x = 60; player.y = 60; player.vx = 0; player.vy = 0; player.onGround = false; player.tranceCD = 0; updateHUD(); showDialogue(current.dialogue); }
+    scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x07050a, 0.0032);
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.05, 5000);
+    camera.position.set(0,10,80); // start high for cutscene
 
-  function showDialogue(lines){ if(!lines) return; dialogueEl.textContent = lines.join('\n\n') + '\n\n(press K or tap the screen to continue)'; dialogueEl.style.display = 'block'; state='dialogue'; }
-  function hideDialogue(){ dialogueEl.style.display = 'none'; state='playing'; }
+    // audio listener for future positional audio
+    listener = new THREE.AudioListener();
+    camera.add(listener);
 
-  // Trance mechanic
-  let timeScale = 1; function triggerTrance(){ if(player.tranceCD>0) return; timeScale = 0.22; player.tranceCD = 3.2; player.flow = Math.min(100, player.flow + 22); spawnPulse(player.x+player.w/2, player.y+player.h/2); setTimeout(()=>{ timeScale = 1; }, 900); }
+    // lights: cinematic, gritty
+    scene.add(new THREE.HemisphereLight(0x6e7f9a, 0x050409, 0.6));
+    const key = new THREE.DirectionalLight(0xffe3c6, 0.55); key.position.set(40,80,10); scene.add(key);
 
-  function spawnParticle(x,y,dx,dy,col,life=0.9){ particles.push({x,y,dx,dy,col,life,t:0}); }
-  function spawnPulse(x,y){ for(let i=0;i<10;i++){ const ang=Math.random()*Math.PI*2; const s=20+Math.random()*40; spawnParticle(x,y,Math.cos(ang)*s,Math.sin(ang)*s,'rgba(200,60,255,0.12)',0.8); } }
+    // ground
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(4000,4000), new THREE.MeshStandardMaterial({color:0x07070a, roughness:0.05, metalness:0.35}));
+    ground.rotation.x = -Math.PI/2; scene.add(ground);
 
-  function updateHUD(){ hpEl.textContent = player.hp; flowEl.textContent = Math.floor(player.flow); tranceEl.textContent = player.tranceCD<=0 ? 'READY' : player.tranceCD.toFixed(1)+'s'; }
+    // skyline, windows, lights, traffic
+    buildSkyline();
+    createWindows(preset.windows);
+    createStreetLamps();
+    createTraffic(preset.traffic);
+    createWaterTowers(20);
 
-  // Main loop
-  let last = performance.now(); function loop(now){ const rawDt = Math.min(50, now - last)/1000; last = now; const dt = rawDt * timeScale; update(dt, rawDt); render(); requestAnimationFrame(loop); }
+    // player anchor
+    player.position.set(0,0.5,6);
+    scene.add(player);
 
-  function update(dt, rawDt){ if(state==='playing'){
-      // Gather input (keyboard + touch)
-      let move = 0; if(keys['a']||keys['arrowleft']||touchMap.left) move -= 1; if(keys['d']||keys['arrowright']||touchMap.right) move += 1;
-      player.vx += move * accel * dt; player.vx = Math.max(-maxVX, Math.min(maxVX, player.vx)); player.x += player.vx * dt; player.vx *= 0.86;
+    // postprocess
+    composer = new THREE.EffectComposer(renderer);
+    composer.addPass(new THREE.RenderPass(scene, camera));
+    const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.9, 0.4, 0.8);
+    composer.addPass(bloom);
+    const fxaa = new THREE.ShaderPass(THREE.FXAAShader);
+    fxaa.material.uniforms['resolution'].value.set(1/window.innerWidth, 1/window.innerHeight);
+    composer.addPass(fxaa);
 
-      // Jump
-      const jumpPressed = keys['w']||keys['arrowup']||keys[' ' ]|| touchMap.jump;
-      if(jumpPressed && player.onGround){ player.vy = -jumpPower*(0.9+Math.random()*0.15); player.onGround = false; }
-      player.vy += gravity * dt; player.y += player.vy * dt;
+    // controls (pointerlock for desktop)
+    controls = new THREE.PointerLockControls(camera, renderer.domElement);
 
-      // Platform collision
-      player.onGround = false; for(let p of current.platforms){ if(player.x + player.w > p.x && player.x < p.x + p.w && player.y + player.h > p.y && player.y + player.h < p.y + p.h + 30 && player.vy >= 0){ player.y = p.y - player.h; player.vy = 0; player.onGround = true; } }
+    // inputs + mobile joystick
+    setupInput();
 
-      // Bounds & falling
-      if(player.x < 0) player.x = 0; if(player.x + player.w > W) player.x = W - player.w;
-      if(player.y > H + 40){ player.hp = Math.max(0, player.hp-1); updateHUD(); if(player.hp<=0){ state='dead'; showDialogue(["I fell from the penthouse and woke on cold tile."]); } player.x = 60; player.y = 60; player.vx = 0; player.vy = 0; }
+    raycaster = new THREE.Raycaster();
+    clock = new THREE.Clock();
 
-      // Enemies simple interactions
-      for(let e of current.enemies){ if(e.type==='drone'){ const dir = Math.sign(player.x - e.x); e.x += dir * 30 * dt * (1 + Math.abs(Math.sin(performance.now()*0.001))); if(Math.abs((player.x+player.w/2)-e.x) < 14 && Math.abs((player.y+player.h/2)-e.y) < 18){ if(!player.inv){ player.hp = Math.max(0, player.hp-1); player.inv = 0.8; updateHUD(); } } }
-        if(e.type==='shade'){ if(!e.timer) e.timer=0; e.timer += dt; if(e.timer>1.8){ e.x = Math.random()*(W-80)+80; e.timer = 0; } if(Math.abs((player.x+player.w/2)-e.x)<14 && Math.abs((player.y+player.h/2)-e.y)<16){ if(!player.inv){ player.hp = Math.max(0, player.hp-1); player.inv = 0.8; updateHUD(); } } }
+    animate();
+  }
+
+  // --- scene builders ---
+  function buildSkyline(){
+    const group = new THREE.Group();
+    for(let cx=-12; cx<=12; cx++){
+      const bias = 1 - Math.abs(cx)/14;
+      for(let d=0; d<6; d++){
+        const h = 8 + Math.random()*(48*bias);
+        const w = 3 + Math.random()*2;
+        const depth = -(d*14 + Math.random()*6);
+        const geom = new THREE.BoxGeometry(w,h,3 + Math.random()*2);
+        const hue = 20 + Math.random()*40; // warmer tones for gritty
+        const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue/360,0.06,0.08 + Math.random()*0.04), roughness:0.46, metalness:0.2 });
+        const m = new THREE.Mesh(geom, mat);
+        m.position.set(cx*6 + (Math.random()*0.6-0.3), h/2 - 0.5, depth);
+        group.add(m);
+        if(Math.random()>0.7){
+          const sign = new THREE.Mesh(new THREE.PlaneGeometry(w*0.8, h*0.45), new THREE.MeshBasicMaterial({color:0xffd7a8, transparent:true, opacity:0.06, side:THREE.DoubleSide}));
+          sign.position.set(m.position.x, m.position.y, m.position.z + (1.8 + Math.random()*0.6)); group.add(sign);
+        }
       }
+    }
+    scene.add(group);
+  }
 
-      // pickups
-      for(let i=current.pickups.length-1;i>=0;i--){ const p = current.pickups[i]; if(Math.abs((player.x+player.w/2)-p.x) < 14 && Math.abs((player.y+player.h/2)-p.y) < 18){ if(p.type==='verse'){ player.flow = Math.min(100, player.flow+28); current.pickups.splice(i,1); spawnParticle(p.x,p.y,(Math.random()-0.5)*80,-80,'rgba(180,240,255,0.92)',0.9); updateHUD(); } } }
+  let windowInst=null;
+  function createWindows(count=700){
+    const plane = new THREE.PlaneGeometry(0.62,0.46);
+    const mat = new THREE.MeshBasicMaterial({color:0xfff3d8});
+    windowInst = new THREE.InstancedMesh(plane, mat, count);
+    let i=0;
+    for(let n=0;n<count;n++){
+      const x = (Math.random()*320 - 160);
+      const y = 1.8 + Math.random()*86;
+      const z = - (Math.random()*1000);
+      const m = new THREE.Matrix4().makeTranslation(x,y,z);
+      windowInst.setMatrixAt(i++, m);
+      if(i>=count) break;
+    }
+    scene.add(windowInst);
+  }
 
-      // attack (J) — optional
-      if(keys['j']){ for(let e of current.enemies){ if(Math.abs((player.x+player.w/2)-e.x) < 26 && Math.abs((player.y+player.h/2)-e.y) < 24){ e.dead = true; spawnParticle(e.x,e.y,(Math.random()-0.5)*120,(Math.random()-0.5)*120,'rgba(255,120,200,0.95)',1.0); } } current.enemies = current.enemies.filter(e=>!e.dead); }
-
-      // trance from touch or key
-      if((keys['s']||keys['shift']|| touchMap.trance) && player.tranceCD <= 0){ triggerTrance(); }
-      if(player.tranceCD > 0) player.tranceCD = Math.max(0, player.tranceCD - rawDt);
-      updateHUD(); if(player.inv) player.inv = Math.max(0, player.inv - rawDt);
-      for(let i=particles.length-1;i>=0;i--){ const p = particles[i]; p.t += rawDt; p.x += p.dx * rawDt; p.y += p.dy * rawDt; p.dy += 200 * rawDt; if(p.t > p.life) particles.splice(i,1); }
-
-      // proceed when cleared
-      if(current.enemies.length === 0 && current.pickups.length === 0){ levelIndex++; if(levelIndex < levels.length){ loadLevel(levelIndex); } else { state = 'menu'; showDialogue(["I found Lila in the quiet between my lines.","The penthouse is still a room of glass and cold light."]); } }
-
-    } else if(state === 'dialogue'){ // K or tap to continue
-      if(keys['k']){ hideDialogue(); keys['k']=false; }
+  function createStreetLamps(){
+    for(let z=-10; z>-600; z-=12){
+      [-10,10].forEach(x=>{
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,3.8,10), new THREE.MeshStandardMaterial({color:0x222222, roughness:0.6}));
+        pole.position.set(x,2.2,z); scene.add(pole);
+        const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.24,10,10), new THREE.MeshStandardMaterial({emissive:0xffecd1, emissiveIntensity:1.0}));
+        lamp.position.set(x,3.6,z); scene.add(lamp);
+        const pl = new THREE.PointLight(0xffe6d0, 0.9, 12, 2);
+        pl.position.set(x,3.4,z); scene.add(pl);
+      });
     }
   }
 
-  function render(){ ctx.clearRect(0,0,W,H);
-    // background
-    const bg = ctx.createLinearGradient(0,0,0,H); const hue = current ? current.bgHue : 240; bg.addColorStop(0, `hsl(${hue} 40% 6%)`); bg.addColorStop(0.6, `hsl(${(hue+20)%360} 30% 8%)`); bg.addColorStop(1, '#02020a'); ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
-    // neon shapes
-    for(let i=0;i<neon.length;i++){ const s = neon[i]; const pulse = 0.6 + Math.sin(s.phase + performance.now()*0.001 + i)*0.4; const x = (s.x + Math.sin(performance.now()*0.0008 + i) * 16) % W; const y = s.y + Math.cos(s.phase*0.9 + performance.now()*0.0009) * 8; ctx.save(); ctx.globalAlpha = 0.12 * pulse; ctx.beginPath(); ctx.ellipse(x,y,s.size*0.6,s.size*0.36,0,0,Math.PI*2); ctx.fillStyle = `hsl(${s.hue} 80% 55% / 0.45)`; ctx.fill(); ctx.restore(); }
-    // skyline
-    for(let i=0;i<30;i++){ const bx = i*24 + (performance.now()*0.02)%24; const bh = 20 + Math.abs(Math.sin(i*0.6 + performance.now()*0.0008))*60; ctx.fillStyle = 'rgba(5,5,10,0.6)'; ctx.fillRect((bx%W), H-80-bh, 18, bh); }
-    // platforms
-    if(current) for(let p of current.platforms){ ctx.fillStyle = '#08070b'; ctx.fillRect(p.x,p.y,p.w,p.h); const grad = ctx.createLinearGradient(p.x,p.y,p.x+p.w,p.y); grad.addColorStop(0, 'rgba(0,200,255,0.06)'); grad.addColorStop(0.5,'rgba(255,20,150,0.08)'); grad.addColorStop(1,'rgba(160,0,255,0.06)'); ctx.fillStyle = grad; ctx.fillRect(p.x,p.y-4,p.w,4); }
-    // pickups
-    if(current) for(let p of current.pickups){ if(p.type==='verse'){ ctx.save(); ctx.translate(p.x,p.y); ctx.fillStyle='rgba(255,235,210,0.95)'; ctx.fillRect(-6,-6,12,10); ctx.fillStyle='rgba(200,60,255,0.9)'; ctx.fillRect(-6,-6,12,2); ctx.restore(); } }
-    // enemies
-    if(current) for(let e of current.enemies){ if(e.type==='drone'){ ctx.save(); ctx.translate(e.x,e.y); ctx.beginPath(); ctx.ellipse(0,0,10,6,0,0,Math.PI*2); ctx.fillStyle='rgba(200,220,255,0.12)'; ctx.fill(); ctx.fillStyle='rgba(180,10,200,0.9)'; ctx.fillRect(-4,-6,8,4); ctx.restore(); } if(e.type==='shade'){ ctx.save(); ctx.translate(e.x,e.y); ctx.beginPath(); ctx.ellipse(0,0,10,14,0,0,Math.PI*2); ctx.fillStyle='rgba(30,10,40,0.8)'; ctx.fill(); ctx.restore(); } }
-    // player
-    ctx.save(); ctx.translate(Math.round(player.x)+0.5, Math.round(player.y)+0.5); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(2+2,player.h+2,player.w,4); ctx.fillStyle = '#f9fcff'; ctx.fillRect(0,0,player.w,player.h); ctx.fillStyle = 'rgba(255,20,150,0.95)'; ctx.fillRect(0,player.h-4,player.w,2); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(0,200,255,0.06)'; ctx.fillRect(-8,-8,player.w+16,player.h+16); ctx.restore();
-    // particles
-    for(let p of particles){ ctx.globalAlpha = Math.max(0,1 - p.t/p.life); ctx.fillStyle = p.col; ctx.fillRect(p.x-1,p.y-1,3,3); } ctx.globalAlpha = 1;
-    // scanlines
-    ctx.fillStyle = 'rgba(0,0,0,0.04)'; for(let y=0;y<H;y+=3) ctx.fillRect(0,y,W,1);
-    // vignette
-    const v = ctx.createLinearGradient(0,0,0,H); v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(0.7,'rgba(0,0,0,0.3)'); v.addColorStop(1,'rgba(0,0,0,0.6)'); ctx.fillStyle=v; ctx.fillRect(0,0,W,H);
+  const trafficArr = [];
+  function createTraffic(n=12){
+    for(let i=0;i<n;i++){
+      const pts = [];
+      const base = -10 - i*18;
+      for(let p=0;p<8;p++) pts.push(new THREE.Vector3((Math.random()*6-3), 0.12, base - p*12));
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const mat = new THREE.LineBasicMaterial({color:0xffd8a8, transparent:true, opacity:0.6});
+      const line = new THREE.Line(geo, mat); scene.add(line);
+      trafficArr.push({line, speed:0.06 + Math.random()*0.12});
+    }
   }
 
-  // Touch input wiring object (for logic)
-  const touchListeners = {};
-  const touchUI = document.getElementById('touchUI'); function setTouchMap(){ touchMap.left = touchMap.left || false; touchMap.right = touchMap.right || false; touchMap.jump = touchMap.jump || false; touchMap.trance = touchMap.trance || false; }
+  function createWaterTowers(n=12){
+    for(let i=0;i<n;i++){
+      const geo = new THREE.CylinderGeometry(0.6,0.6,1.6,12);
+      const mat = new THREE.MeshStandardMaterial({color:0x34281b, roughness:0.6});
+      const w = new THREE.Mesh(geo, mat);
+      w.position.set((Math.random()*220-110), 6 + Math.random()*64, -(Math.random()*1200));
+      scene.add(w);
+    }
+  }
 
-  // Map touchMap to keys for game usage
-  function updateTouchFromMap(){ if(touchMap.left) keys['a']=true; else if(!keys['arrowleft']) keys['a']=false; if(touchMap.right) keys['d']=true; else if(!keys['arrowright']) keys['d']=false; if(touchMap.jump) keys['w']=true; else if(!keys['arrowup']) keys['w']=false; if(touchMap.trance) keys['s']=true; }
+  // input & controls
+  let dragging=false, lastX=0, lastY=0;
+  function setupInput(){
+    window.addEventListener('resize', onResize);
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('keyup', onKeyUp);
+    renderer.domElement.addEventListener('mousedown', onMouseDown);
+    renderer.domElement.addEventListener('mousemove', onMouseMove);
+    renderer.domElement.addEventListener('mouseup', onMouseUp);
+    renderer.domElement.addEventListener('touchend', onTouchEnd, {passive:false});
+    renderer.domElement.addEventListener('click', onClick);
+    if(isMobile){ document.getElementById('joystick').style.display='block'; document.getElementById('interact').style.display='block'; setupMobileLook(); setupJoystick(); }
+  }
 
-  // internal, keep track
-  const touchMap = {left:false,right:false,jump:false,trance:false};
-  // link external touches to internal map (already bound above via bindTouch)
+  function onKey(e){
+    const k = e.key.toLowerCase();
+    if(k==='w') move.f=1;
+    if(k==='s') move.b=1;
+    if(k==='a') move.l=1;
+    if(k==='d') move.r=1;
+    if(e.code==='Space'){ const hit=centerRaycast(); if(hit) interactWith(hit.object); }
+  }
+  function onKeyUp(e){ const k = e.key.toLowerCase(); if(k==='w') move.f=0; if(k==='s') move.b=0; if(k==='a') move.l=0; if(k==='d') move.r=0; }
 
-  // click/tap to advance dialogue
-  document.getElementById('gameWrap').addEventListener('pointerdown', ()=>{ if(state==='dialogue') hideDialogue(); if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); });
+  function onMouseDown(e){ dragging=true; lastX=e.clientX; lastY=e.clientY; }
+  function onMouseUp(e){ dragging=false; }
+  function onMouseMove(e){
+    if(!dragging) return;
+    const dx = (e.clientX - lastX) * 0.0022;
+    const dy = (e.clientY - lastY) * 0.0022;
+    player.rotation.y -= dx;
+    camera.rotation.x = Math.max(-1.4, Math.min(1.4, camera.rotation.x - dy));
+    lastX = e.clientX; lastY = e.clientY;
+  }
+  function onTouchEnd(e){ if(isMobile){ const hit=centerRaycast(); if(hit) interactWith(hit.object); } }
+  function onClick(e){ if(isMobile) return; const rect = renderer.domElement.getBoundingClientRect(); const nx = ((e.clientX-rect.left)/rect.width)*2 -1; const ny = -((e.clientY-rect.top)/rect.height)*2 +1; raycaster.setFromCamera(new THREE.Vector2(nx,ny), camera); const hit = raycaster.intersectObjects(npcs, true)[0]; if(hit) interactWith(hit.object); }
 
-  // Start loop
-  requestAnimationFrame(loop);
+  // mobile look
+  function setupMobileLook(){
+    let tracking=false, last=null;
+    renderer.domElement.addEventListener('touchstart', (ev)=>{ if(ev.touches.length===1 && ev.touches[0].clientX > window.innerWidth/2){ tracking=true; last={x:ev.touches[0].clientX, y:ev.touches[0].clientY}; } }, {passive:false});
+    renderer.domElement.addEventListener('touchmove', (ev)=>{ if(tracking){ const t = ev.touches[0]; const dx = (t.clientX-last.x)/window.innerWidth; const dy = (t.clientY-last.y)/window.innerHeight; player.rotation.y -= dx * Math.PI; camera.rotation.x = Math.max(-1.4, Math.min(1.4, camera.rotation.x - dy * Math.PI)); last = {x:t.clientX, y:t.clientY}; } }, {passive:false});
+    renderer.domElement.addEventListener('touchend', ()=>{ tracking=false; }, {passive:false});
+  }
 
-  // initial menu dialogue
-  showDialogue(["Penthouse. Needle. Neon. Memory is a crooked mirror."]); state='menu';
-  addEventListener('keydown', e=>{ if(e.key.toLowerCase()==='k' && state==='menu'){ startGame(); } });
+  // joystick
+  function setupJoystick(){
+    let dragging=false, start=null, max=40;
+    knob.style.transform='translate(0px,0px)';
+    document.getElementById('joystick').addEventListener('touchstart',(e)=>{ e.preventDefault(); dragging=true; const t=e.touches[0]; start={x:t.clientX,y:t.clientY}; },{passive:false});
+    document.getElementById('joystick').addEventListener('touchmove',(e)=>{ e.preventDefault(); if(!dragging) return; const t=e.touches[0]; const dx=t.clientX-start.x; const dy=t.clientY-start.y; const nx=Math.max(-max,Math.min(max,dx)); const ny=Math.max(-max,Math.min(max,dy)); knob.style.transform=`translate(${nx}px,${ny}px)`; move.f=(ny<-8)?1:0; move.b=(ny>8)?1:0; move.l=(nx<-8)?1:0; move.r=(nx>8)?1:0; },{passive:false});
+    document.getElementById('joystick').addEventListener('touchend',(e)=>{ dragging=false; knob.style.transform='translate(0px,0px)'; move={f:0,b:0,l:0,r:0}; },{passive:false});
+    interactBtn.addEventListener('click', ()=>{ const hit=centerRaycast(); if(hit) interactWith(hit.object); });
+  }
 
-  // Bind touch buttons created earlier - keep in sync even if re-rendered
-  function addTouchBindings(){ bindTouch('btn-left','left'); bindTouch('btn-right','right'); bindTouch('btn-jump','jump'); bindTouch('btn-trance','trance'); }
-  // reuse bindTouch from above (declared earlier)
-  addTouchBindings();
+  // interactions placeholder (no NPCs yet)
+  function centerRaycast(){ if(!raycaster) return null; raycaster.setFromCamera(new THREE.Vector2(0,0), camera); const hits = raycaster.intersectObjects(npcs, true); return hits.length?hits[0]:null; }
+  function interactWith(obj){ if(!obj) return; const lines = obj.userData.lines || LINES; const text = lines[Math.floor(Math.random()*lines.length)]; showQuote(text); if('speechSynthesis' in window){ const u=new SpeechSynthesisUtterance(text); u.rate=0.95; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); } saveFragment(text); }
 
-  // ensure audio initializes on first interaction
-  document.addEventListener('click', ()=>{ if(!audioCtx) initAudio(); }, {once:true});
+  function showQuote(t){ quote.innerText = t; quote.style.display='block'; setTimeout(()=>quote.style.display='none',4000); }
+  function saveFragment(t){ const arr = JSON.parse(localStorage.getItem('pp_fragments')||'[]'); arr.push({when:Date.now(),text:t}); localStorage.setItem('pp_fragments', JSON.stringify(arr)); updateHUD(); }
+  function updateHUD(){ const arr = JSON.parse(localStorage.getItem('pp_fragments')||'[]'); hud.textContent = `Mode: Roam · Fragments: ${arr.length}`; }
 
-  </script>
+  // cutscene: simple camera flyover into player position, then enable gameplay
+  function startCutscene(){
+    const from = new THREE.Vector3(0,60,160);
+    const to = new THREE.Vector3(0,1.8,8);
+    const lookAt = new THREE.Vector3(0,0,0);
+    const duration = 8000; // 8 seconds
+    const start = performance.now();
+    camera.position.copy(from);
+    camera.lookAt(0,0,0);
+    let cutting = true;
+    function tick(){
+      const now = performance.now();
+      let t = Math.min(1, (now - start)/duration);
+      // ease in/out
+      t = t<0.5 ? 2*t*t : -1 + (4 - 2*t)*t;
+      camera.position.lerpVectors(from, to, t);
+      camera.lookAt(lookAt);
+      if(cutting && now - start < duration){
+        renderer.render(scene, camera);
+        requestAnimationFrame(tick);
+      } else {
+        // enter gameplay: lock pointer on desktop
+        cutting = false;
+        // set player-facing camera
+        camera.position.copy(to);
+        camera.rotation.set(0,0,0);
+        // allow pointer lock (user must click to lock — provide hint)
+        // start main loop continues already in animate, we just enable controls if pointerlock desired
+        // Remove overlay if any (already hidden)
+      }
+    }
+    tick();
+  }
+
+  // animate loop
+  function animate(){
+    requestAnimationFrame(animate);
+    if(!clock) clock = new THREE.Clock();
+    const dt = clock.getDelta();
+    const t = clock.getElapsedTime ? clock.getElapsedTime() : performance.now()*0.001;
+
+    // traffic move
+    for(const it of trafficArr){ it.line.position.z += it.speed * dt * 60; if(it.line.position.z > 40) it.line.position.z = -1200; }
+
+    if(windowInst){ const o = 0.45 + Math.abs(Math.sin(t*2.2))*0.5; windowInst.material.opacity = o; windowInst.material.transparent = true; }
+
+    // movement
+    const speed = isMobile ? 2.6 : 4.6;
+    const forward = (move.f?1:0) - (move.b?1:0);
+    const lateral = (move.r?1:0) - (move.l?1:0);
+    if(Math.abs(forward) + Math.abs(lateral) > 0){
+      const dir = new THREE.Vector3(lateral,0,forward).normalize();
+      const ang = player.rotation.y; const c=Math.cos(ang), s=Math.sin(ang);
+      const dx = dir.x * c + dir.z * s; const dz = dir.z * c - dir.x * s;
+      player.position.x += dx * speed * dt; player.position.z += dz * speed * dt;
+      // footsteps
+      try{ foot.currentTime=0; foot.play().catch(()=>{}); }catch(e){};
+    }
+
+    // simple ground constraint
+    if(player.position.y < 0.5) player.position.y = 0.5;
+
+    // camera follow
+    camera.position.x += (player.position.x - camera.position.x) * 0.12;
+    camera.position.z += (player.position.z + 8 - camera.position.z) * 0.12;
+    camera.position.y += (1.7 - camera.position.y) * 0.12;
+    camera.lookAt(player.position.x, player.position.y + 0.6, player.position.z);
+
+    if(composer) composer.render();
+    else renderer.render(scene, camera);
+
+    updateHUD();
+  }
+
+  // resize
+  function onResize(){ if(!renderer||!camera) return; camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); if(composer){ composer.setSize(window.innerWidth, window.innerHeight); const fxaa = composer.passes.find(p => p instanceof THREE.ShaderPass && p.material && p.material.uniforms && p.material.uniforms['resolution']); if(fxaa) fxaa.material.uniforms['resolution'].value.set(1/window.innerWidth,1/window.innerHeight); } }
+  window.addEventListener('resize', onResize);
+
+  // small arrays & helper
+  const trafficArr = [];
+  window.pp_neon = { fragments: ()=>JSON.parse(localStorage.getItem('pp_fragments')||'[]'), clear: ()=>{ localStorage.removeItem('pp_fragments'); updateHUD(); } };
+
+  // end IIFE
+})(); 
+</script>
 </body>
 </html>
